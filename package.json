@@ -1,0 +1,19 @@
+{
+  "name": "casable",
+  "description": "Node CAS plugin",
+  "version": "0.2.0",
+  "keywords":["CAS", "SSO", "Security", "Authentication"],
+  "homepage":"https://github.com/mpedigree1/casable",
+  "private": false,
+  "bugs":{ "url" : "https://github.com/mpedigree1/casable/issues" ,"email" : "cbaker@thoughtworks.com"},
+  "license":"",
+  "main":"./lib/casable",
+  "directories" : {
+        "lib": "./lib"
+  },
+  "repository" :
+    { "type" : "git", "url" : "http://github.com/npm/npm.git"},
+  "dependencies": {
+    "xml2js":"0.4.1"
+  }
+}
