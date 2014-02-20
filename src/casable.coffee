@@ -3,7 +3,9 @@ xmls2js = require 'xml2js'
 http = require 'http'
 
 class Cas2ValidationReader
-	@validationUrl = '/serviceValidate'
+	
+	validationUrl: () ->
+		return '/serviceValidate'
 
 	constructor: () ->
 
@@ -15,7 +17,8 @@ class Cas2ValidationReader
 				callback id: result['cas:serviceResponse']['cas:authenticationSuccess'][0]['cas:user'][0];
 
 class Cas1ValidationReader
-	@validationUrl = '/validate'
+	validationUrl: () ->
+		return '/validate'
 
 	constructor: () ->
 
@@ -35,7 +38,8 @@ class Casable
 
 		@parsedBaseUrl = url.parse @ssoBaseURL
 
-		@logoutDestination = @config.logoutPath || '/';
+		@logoutDestination = @config.logoutPath || '/'
+		@casVersion = @config.casVersion || '2.0'
 
 		@loginURL = @ssoBaseURL + '/login'
 		@logoutURL = @ssoBaseURL + '/logout'
@@ -92,8 +96,10 @@ class Casable
 
 	validate: (req, ticket, callback) =>
 
+		reader = if @casVersion == "2.0" then new Cas2ValidationReader() else new Cas1ValidationReader()
+
 		validateUrl = url.format
-			pathname: "#{@parsedBaseUrl.path}#{Cas2ValidationReader.validationUrl}"
+			pathname: "#{@parsedBaseUrl.path}#{reader.validationUrl()}"
 			query:
 				ticket: ticket,
 				service: @buildServiceUrl req
@@ -111,7 +117,7 @@ class Casable
 					body += chunk
 
 				res.on 'end', () ->
-					new Cas2ValidationReader().read body, callback
+					reader.read body, callback
 
 		req.on 'error', (error) ->
 			callback null, error

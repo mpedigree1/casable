@@ -6,7 +6,7 @@ This project will be the Casable Project to enable NodeJS express applications t
 Useage:
 <pre>
 var cas = require('casable');
-var auth = cas.authentication('http://cas.tw.com/cas', {logoutPath:'/unsecure'});
+var auth = cas.authentication('http://cas.tw.com/cas', {logoutPath:'/unsecure', casVersion:'2.0'});
 
 app.get('/securePage', auth, function(request, response) {
   var username = request.authenticatedUser.id
