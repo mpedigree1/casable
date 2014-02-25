@@ -91,7 +91,7 @@ class Casable
 
 		if req.session? and req.session.authenticatedUser?
 			req.authenticatedUser = req.session.authenticatedUser
-			@done(req, res, user)
+			@done req, res, req.session.authenticatedUser
 			next()
 			return
 
@@ -101,7 +101,7 @@ class Casable
 				if req.session?
 					req.session.authenticatedUser = user
 				req.authenticatedUser = user
-				@done(req, res, user)
+				@done req, res, user
 				next()
 				return
 		else
