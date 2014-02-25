@@ -33,7 +33,7 @@ class Cas1ValidationReader
 			callback id: lines[1]
 
 class Casable
-	constructor: (@ssoBaseURL, @config = {}) ->
+	constructor: (@ssoBaseURL, @config = {}, @done) ->
 		console.log "Starting Casable with CAS Server : " + @ssoBaseURL
 
 		@parsedBaseUrl = url.parse @ssoBaseURL
@@ -80,6 +80,7 @@ class Casable
 
 		if req.session? and req.session.authenticatedUser?
 			req.authenticatedUser = req.session.authenticatedUser
+			@done(req, res, user)
 			next()
 			return
 
@@ -89,6 +90,7 @@ class Casable
 				if req.session?
 					req.session.authenticatedUser = user
 				req.authenticatedUser = user
+				@done(req, res, user)
 				next()
 				return
 		else
@@ -122,5 +124,5 @@ class Casable
 		req.on 'error', (error) ->
 			callback null, error
 
-exports.authentication = (ssoBaseURL, config = {})->
-	return new Casable(ssoBaseURL, config).authenticate
+exports.authentication = (ssoBaseURL, config = {}, done)->
+	return new Casable(ssoBaseURL, config, done).authenticate
