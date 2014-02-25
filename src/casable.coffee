@@ -14,7 +14,18 @@ class Cas2ValidationReader
 			if 'cas:authenticationFailure' of result['cas:serviceResponse']
 				callback null, "Invalid Ticket or Service"
 			else if 'cas:authenticationSuccess' of result['cas:serviceResponse']
-				callback id: result['cas:serviceResponse']['cas:authenticationSuccess'][0]['cas:user'][0];
+				auth = result['cas:serviceResponse']['cas:authenticationSuccess'][0]
+
+				session = 
+					id: auth['cas:user'][0]
+					name: auth['cas:name'][0]
+					surname: auth['cas:surname'][0]
+					email: auth['cas:email'][0]
+					salt: auth['cas:salt'][0]
+					passwordHash: auth['cas:passwordHash'][0]
+
+				callback session
+					
 
 class Cas1ValidationReader
 	validationUrl: () ->
@@ -86,7 +97,7 @@ class Casable
 
 		ticket = req.param 'ticket'
 		if ticket?
-			@validate req, ticket, (user, error) ->
+			@validate req, ticket, (user, error) =>
 				if req.session?
 					req.session.authenticatedUser = user
 				req.authenticatedUser = user
