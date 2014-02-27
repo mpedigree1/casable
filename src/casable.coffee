@@ -25,7 +25,7 @@ class Cas2ValidationReader
 					passwordHash: auth['cas:passwordHash'][0]
 
 				callback session
-					
+
 
 class Cas1ValidationReader
 	validationUrl: () ->
@@ -44,9 +44,7 @@ class Cas1ValidationReader
 			callback id: lines[1]
 
 class Casable
-	constructor: (@ssoBaseURL, @config = {}, @done) ->
-		console.log "Starting Casable with CAS Server : " + @ssoBaseURL
-
+	constructor: (@ssoBaseURL, @config = {}) ->
 		@parsedBaseUrl = url.parse @ssoBaseURL
 
 		@logoutDestination = @config.logoutPath || '/'
@@ -67,7 +65,7 @@ class Casable
 			host: req.headers.host
 			protocol: 'http'
 			port: req.headers.port
-			pathname: @logoutDestination
+			pathname: @logoutURL
 
 	login: (res, req) =>
 		redirectURL = url.parse @loginURL, true
@@ -75,11 +73,13 @@ class Casable
 		res.redirect url.format redirectURL
 
 	logout: (req, res) =>
-		if req.session? and req.session.authenticatedUser?
+		if req.session?
 			req.session.authenticatedUser = null
 
-		redirectURL = url.parse @logoutURL, true
-		redirectURL.query.url = @buildLogoutUrl req
+		req.authenticatedUser = null
+
+		redirectURL = url.parse @logoutURL
+
 		res.redirect url.format redirectURL
 
 	authenticate: (req, res, next) =>
@@ -91,7 +91,6 @@ class Casable
 
 		if req.session? and req.session.authenticatedUser?
 			req.authenticatedUser = req.session.authenticatedUser
-			@done req, res, req.session.authenticatedUser
 			next()
 			return
 
@@ -101,7 +100,6 @@ class Casable
 				if req.session?
 					req.session.authenticatedUser = user
 				req.authenticatedUser = user
-				@done req, res, user
 				next()
 				return
 		else
@@ -135,5 +133,5 @@ class Casable
 		req.on 'error', (error) ->
 			callback null, error
 
-exports.authentication = (ssoBaseURL, config = {}, done)->
-	return new Casable(ssoBaseURL, config, done).authenticate
+exports.authentication = (ssoBaseURL, config = {})->
+	return new Casable(ssoBaseURL, config).authenticate
