@@ -89,13 +89,15 @@ class Casable
 			next()
 			return
 
-		if not req.cookies.goldkeys_sso
-			if req.session?
-				req.session.authenticatedUser = null
-			req.authenticatedUser = null
 
-			@login res, req
-			return
+		if (config.cookieName)
+			if not req.cookies[config.cookieName]
+				if req.session?
+					req.session.authenticatedUser = null
+				req.authenticatedUser = null
+
+				@login res, req
+				return
 
 		if req.session? and req.session.authenticatedUser?
 			req.authenticatedUser = req.session.authenticatedUser
