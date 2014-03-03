@@ -53,6 +53,8 @@ class Casable
 		@loginURL = @ssoBaseURL + '/login'
 		@logoutURL = @ssoBaseURL + '/logout'
 
+		@cookieName = @config.cookieName
+
 	buildServiceUrl: (req) =>
 		return url.format
 			host: req.headers.host
@@ -89,9 +91,8 @@ class Casable
 			next()
 			return
 
-
-		if (config.cookieName)
-			if not req.cookies[config.cookieName]
+		if (@cookieName)
+			if not req.cookies[@cookieName]
 				if req.session?
 					req.session.authenticatedUser = null
 				req.authenticatedUser = null
