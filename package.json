@@ -1,7 +1,7 @@
 {
   "name": "casable",
   "description": "Node CAS plugin",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "keywords":["CAS", "SSO", "Security", "Authentication"],
   "homepage":"https://github.com/mpedigree1/casable",
   "private": false,

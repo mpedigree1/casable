@@ -58,18 +58,17 @@ class Casable
 	buildServiceUrl: (req) =>
 		return url.format
 			host: req.headers.host
-			port: req.header.port
-			protocol: 'http'
+			protocol: req.protocol
 			pathname: req.url
 
 	buildLogoutUrl: (req) ->
 		return url.format
 			host: req.headers.host
-			protocol: 'http'
-			port: req.headers.port
+			protocol: req.protocol
 			pathname: @logoutURL
 
 	login: (res, req) =>
+
 		redirectURL = url.parse @loginURL, true
 		redirectURL.query.service = @buildServiceUrl req
 		res.redirect url.format redirectURL
