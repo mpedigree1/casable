@@ -1,6 +1,7 @@
 url = require 'url'
 xmls2js = require 'xml2js'
 http = require 'http'
+https = require 'https'
 
 class Cas2ValidationReader
 	
@@ -59,7 +60,7 @@ class Casable
 		return url.format
 			host: req.headers.host
 			protocol: req.protocol
-			pathname: req.url
+			pathname: req.route.path
 
 	buildLogoutUrl: (req) ->
 		return url.format
@@ -68,7 +69,6 @@ class Casable
 			pathname: @logoutURL
 
 	login: (res, req) =>
-
 		redirectURL = url.parse @loginURL, true
 		redirectURL.query.service = @buildServiceUrl req
 		res.redirect url.format redirectURL
@@ -119,28 +119,30 @@ class Casable
 
 		reader = if @casVersion == "2.0" then new Cas2ValidationReader() else new Cas1ValidationReader()
 
+		delete req.query.ticket
+
 		validateUrl = url.format
-			pathname: "#{@parsedBaseUrl.path}#{reader.validationUrl()}"
+			pathname: "#{reader.validationUrl()}"
 			query:
 				ticket: ticket,
 				service: @buildServiceUrl req
 
-		delete parsedUrl.query.ticket if @parsedBaseUrl.query?
+		httpGet = (res) ->
+			res.setEncoding 'utf8'
+			body = ''
 
-		req = http.get
-			host: @parsedBaseUrl.hostname
-			port: @parsedBaseUrl.port
-			path: validateUrl, (res) ->
-				res.setEncoding 'utf8'
-				body = ''
+			res.on 'data', (chunk) ->
+				body += chunk
 
-				res.on 'data', (chunk) ->
-					body += chunk
+			res.on 'end', () ->
+				reader.read body, callback
 
-				res.on 'end', () ->
-					reader.read body, callback
+		if @parsedBaseUrl.protocol == 'https:'
+			validateRequest = https.get "#{@parsedBaseUrl.href}#{validateUrl}", httpGet
+		else
+			validateRequest = http.get "#{@parsedBaseUrl.href}#{validateUrl}", httpGet
 
-		req.on 'error', (error) ->
+		validateRequest.on 'error', (error) ->
 			callback null, error
 
 exports.authentication = (ssoBaseURL, config = {})->
