@@ -83,6 +83,18 @@ class Casable
 
 		res.redirect url.format redirectURL
 
+	authorise: (req, res, next) =>
+		ticket = req.headers['x-ticket']
+
+		if ticket?
+			@validate req, ticket, (user, error) =>
+				if user?
+					next()
+				else
+					res.send 403
+		else
+			res.send 403
+
 	authenticate: (req, res, next) =>
 
 		if req.route.path == '/logout'
@@ -147,3 +159,6 @@ class Casable
 
 exports.authentication = (ssoBaseURL, config = {})->
 	return new Casable(ssoBaseURL, config).authenticate
+
+exports.authorisation = (ssoBaseURL, config = {}) ->
+	return new Casable(ssoBaseURL, config).authorise
