@@ -3,6 +3,31 @@ xmls2js = require 'xml2js'
 http = require 'http'
 https = require 'https'
 
+class CasNoServiceValidationReader
+	
+	validationUrl: () ->
+		return '/serviceAuthorisation'
+
+	constructor: () ->
+
+	read: (body, callback) ->
+		xmls2js.parseString body, (error, result) ->
+			if 'cas:authenticationFailure' of result['cas:serviceResponse']
+				callback null, "Invalid Ticket or Service"
+			else if 'cas:authenticationSuccess' of result['cas:serviceResponse']
+				auth = result['cas:serviceResponse']['cas:authenticationSuccess'][0]
+
+				session = 
+					id: auth['cas:user'][0]
+					name: auth['cas:name'][0]
+					surname: auth['cas:surname'][0]
+					email: auth['cas:email'][0]
+					salt: auth['cas:salt'][0]
+					passwordHash: auth['cas:passwordHash'][0]
+					group: auth['cas:group'][0]
+
+				callback session
+
 class Cas2ValidationReader
 	
 	validationUrl: () ->
@@ -24,6 +49,7 @@ class Cas2ValidationReader
 					email: auth['cas:email'][0]
 					salt: auth['cas:salt'][0]
 					passwordHash: auth['cas:passwordHash'][0]
+					group: auth['cas:group'][0]
 
 				callback session
 
@@ -129,7 +155,10 @@ class Casable
 
 	validate: (req, ticket, callback) =>
 
-		reader = if @casVersion == "2.0" then new Cas2ValidationReader() else new Cas1ValidationReader()
+		reader = switch
+			when @casVersion == "2.0" then new Cas2ValidationReader()
+			when @casVersion == "SERVICE" then new CasNoServiceValidationReader()
+			else new Cas1ValidationReader()
 
 		delete req.query.ticket
 
