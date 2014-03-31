@@ -132,8 +132,6 @@ class Casable
 		if req.ip in @handleLogoutRequests and req.method=='POST'
 			xmls2js.parseString req.body.logoutRequest, (error, result) =>
 				req.sessionStore.destroy result['samlp:LogoutRequest']['samlp:SessionIndex'][0],@logout req, res
-				#destroy cas req make the session
-				req.sessionStore.destroy req.sessionID
 				return
 
 		if @cookieName
