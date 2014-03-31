@@ -62,9 +62,8 @@ class Cas1ValidationReader
 
 	read: (body, callback) ->
 		lines = body.split '\n'
-
-		if lines.length >= 1
-			if lines[0] == 'no'
+		#Cas1ValidationReader (body.split).lengt==3 always
+		if lines[0] == 'no'
 				callback null, "Invalid Ticket or Service"
 
 		else if lines[0] == 'yes' and lines.length >= 2
@@ -76,7 +75,8 @@ class Casable
 
 		@logoutDestination = @config.logoutPath || '/'
 		@casVersion = @config.casVersion || '2.0'
-
+		#handleLogoutRequests from server ip
+		@handleLogoutRequests=@config.handleLogoutRequests||['10.8.11.7']
 		@loginURL = @ssoBaseURL + '/login'
 		@logoutURL = @ssoBaseURL + '/logout'
 
@@ -86,7 +86,7 @@ class Casable
 		return url.format
 			host: req.headers.host
 			protocol: req.protocol
-			pathname: req.route.path
+			pathname: req.path
 
 	buildLogoutUrl: (req) ->
 		return url.format
@@ -122,13 +122,21 @@ class Casable
 			res.send 403
 
 	authenticate: (req, res, next) =>
-
-		if req.route.path == '/logout'
+		#req.route.path is undefined
+		if req.path == @logoutDestination
 			@logout req, res
-			next()
+			#cannot modify header after send
 			return
 
-		if (@cookieName)
+		#handleLogoutRequests post from  cas server
+		if req.ip in @handleLogoutRequests and req.method=='POST'
+			xmls2js.parseString req.body.logoutRequest, (error, result) =>
+				req.sessionStore.destroy result['samlp:LogoutRequest']['samlp:SessionIndex'][0],@logout req, res
+				#destroy cas req make the session
+				req.sessionStore.destroy req.sessionID
+				return
+
+		if @cookieName
 			if not req.cookies[@cookieName]
 				if req.session?
 					req.session.authenticatedUser = null
@@ -137,21 +145,28 @@ class Casable
 				@login res, req
 				return
 
-		if req.session? and req.session.authenticatedUser?
-			req.authenticatedUser = req.session.authenticatedUser
-			next()
-			return
-
+		# validate ticket
 		ticket = req.param 'ticket'
-		if ticket?
-			@validate req, ticket, (user, error) =>
-				if req.session? and user?
-					req.session.authenticatedUser = user
-				req.authenticatedUser = user
-				next()
-				return
-		else
+		if not req.session.authenticatedUser? and not ticket?
 			@login res, req
+		else if ticket?
+			@validate req,ticket,(user, error)=>
+						if not user?
+							@login res, req
+						else
+							user.ticket=ticket
+							req.session.authenticatedUser = user
+							req.authenticatedUser=user
+							req.sessionStore.set ticket,req.session;
+							next()
+		else
+			#Judge sessionStore has ticket
+			req.sessionStore.get req.session.authenticatedUser.ticket,(error,is_login) =>
+				if is_login?
+					next()
+				else
+					req.session.authenticatedUser=null
+					@login res, req
 
 	validate: (req, ticket, callback) =>
 
