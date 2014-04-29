@@ -1,31 +1,32 @@
-<h1>Casable</h1>
-<p>
+Casable
+===
+
+
 This project will be the Casable Project to enable NodeJS express applications to authenticate using CAS.
-</p>
 
-Useage:
-<pre>
-var cas = require('casable');
-var auth = cas.authentication('http://cas.tw.com/cas', {logoutPath:'/unsecure', casVersion:'2.0'});
+**Make sure that these session and cookie routes are enabled**
+```javascript
 
-app.get('/securePage', auth, function(request, response) {
-  var username = request.authenticatedUser.id
-  response.send(username + "<br><a href='/logout'>Logout</a>");
-});
-</pre>
+    var express = require('express')
+        , cas = require('casable')
+        , memstore =express.session.MemoryStore;//use session memory store ticket
 
-<p>Simply define a URL like this for logout functionality</p>
-<pre>
-app.get('/logout', auth, function(request, response) {
-});
-</pre>
-
-<p>Make sure that these session and cookie routes are enabled</p>
-
-<pre>
-app.use(express.cookieParser());
-app.use(express.session({secret: 'abcxyz'}));
-</pre>
-
-<h2>Todo</h2>
-Make Casable work with HTTPS
+    var app = express();
+    app.use(express.cookieParser('your Secret'));
+    app.use(express.session({
+            store: MemStore({
+            reapInterval: 60000 * 10
+            }),
+            secret: '1234567890QWERTY'
+    }));
+    
+    app.use(cas.authentication('http://sso.com/cas', {
+            logoutPath: '/logout',
+            handleLogoutRequests:['10.8.11.7']//receive the post of logout from the ip
+            casVersion: '1.0'
+    }));
+    
+    app.use(app.router);//this must after app.use(cas.authentication)
+    
+    
+```
