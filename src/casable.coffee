@@ -144,7 +144,7 @@ class Casable
 				return
 
 		# validate ticket
-		ticket = req.param 'ticket'
+		ticket = req.query.ticket
 		if not req.session.authenticatedUser? and not ticket?
 			@login res, req
 		else if ticket?

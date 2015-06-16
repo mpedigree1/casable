@@ -9,14 +9,15 @@ This project will be the Casable Project to enable NodeJS express applications t
 
     var express = require('express')
         , cas = require('casable')
-        , memstore =express.session.MemoryStore;//use session memory store ticket
+        , session=require('express-session');
+        , memstore =session.MemoryStore;//use session memory store ticket
 
     var app = express();
     app.use(express.cookieParser('your Secret'));
     app.use(express.session({
-            store: MemStore({
-            reapInterval: 60000 * 10
-            }),
+            resave: false,
+            saveUninitialized: false,
+            store: MemStore({reapInterval: 60000 * 10}),
             secret: '1234567890QWERTY'
     }));
     
